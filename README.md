@@ -1,4 +1,4 @@
-## Envoy WASM filter for Certificate Bound Tokens
+## Envoy WASM and LUA filters for Certificate Bound Tokens
 
 Envoy LUA and wasm filters that enforce very basic [Certificate Bound Tokens](https://connect2id.com/learn/token-binding).
 
