@@ -1,0 +1,130 @@
+admin:
+  access_log_path: /dev/null
+  address:
+    socket_address:
+      address: 127.0.0.1
+      port_value: 9000
+
+node:
+  cluster: service_greeter
+  id: test-id
+
+static_resources:
+  listeners:
+  - name: listener_0
+    address:
+      socket_address:
+        address: 0.0.0.0
+        port_value: 8080      
+    filter_chains:
+    - filters:
+      - name: envoy.filters.network.http_connection_manager
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+          stat_prefix: ingress_http
+          codec_type: AUTO
+          route_config:
+            name: local_route
+            virtual_hosts:
+            - name: local_service
+              domains:
+              - "*"
+              routes:
+              - match:
+                  prefix: "/"
+                route:
+                  cluster: service_httpbin
+          http_filters:
+          - name: envoy.filters.http.jwt_authn
+            typed_config:                                         
+              "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+              providers:          
+                custom-jwt:
+                  issuer: https://myissuer
+                  payload_in_metadata: "jwt_payload"
+                  audiences:
+                  - https://foo.bar
+                  local_jwks:
+                    filename: certs/jwk.json                   
+                  from_headers:
+                  - name: Authorization
+                    value_prefix: "Bearer "
+              rules:
+              - match:
+                  prefix: "/"
+                requires:
+                  provider_name: "custom-jwt"
+          - name: envoy.filters.http.wasm
+            typed_config:
+              "@type": type.googleapis.com/udpa.type.v1.TypedStruct                                    
+              type_url: type.googleapis.com/envoy.extensions.filters.http.wasm.v3.Wasm
+              value:
+                config:
+                  name: "my_plugin"
+                  root_id: "my_root_id"
+                  configuration:
+                    "@type": "type.googleapis.com/google.protobuf.StringValue"
+                    value: |
+                      {
+                        "jwtfiltername": "jwt_payload",
+                      }   
+                  vm_config:
+                    runtime: "envoy.wasm.runtime.v8"
+                    vm_id: "my_vm_id"
+                    code:
+                      local:
+                        filename: "envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_example.wasm"
+                      # remote:
+                      #  sha256: 4f2bdf7c249325254e16f58596d168aed95bb30e9c2a50162c58596baf4cfee6 
+                      #  http_uri:
+                      #    uri: https://salrashid123/envoy_cert_bound_token/blob/release-1.0/envoy_filter_http_wasm_example.wasm?raw=true
+                      #    cluster: com_github
+                      #    timeout:
+                      #      seconds: 5
+
+                    configuration: {}                  
+          - name: envoy.filters.http.router
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
+          require_client_certificate: true
+          common_tls_context:
+            tls_certificates:
+            - certificate_chain:
+                filename: certs/http_server.crt
+              private_key:
+                filename: certs/http_server.key
+            validation_context:
+              trusted_ca:
+                filename: certs/tls-ca-chain.pem
+              # verify_certificate_spki:
+              # - "lWH3KiAwwP49UWiHrhYqrKuNkOOoYC9qU+EUG9ACEWM="
+  clusters:
+  - name: service_httpbin
+    connect_timeout: 0.25s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: service_httpbin
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: www.httpbin.org
+                port_value: 80
+  - name: com_github
+    dns_lookup_family: V4_ONLY
+    connect_timeout: 0.25s
+    type: STRICT_DNS
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: com_github
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: github.com
+                port_value: 443
