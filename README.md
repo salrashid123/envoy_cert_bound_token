@@ -73,18 +73,43 @@ The resource server is expected to verify the mTLS connections' client public ke
 In this mechanism, the public certificate gets encoded within a standard structure (`TokenBindingMessage`) and as an http header value.
 The resource server is expected to decode the TokenBindingMessage, extract an embedded ID field as well as the public certificate, compare that to the mTLS session and finally vierify the ID's hash value to an embedded field in the bearer token.
 
+
 The protocols are described here
+
+* `The Token Binding Protocol Version 1.0` [rfc 8471](https://tools.ietf.org/html/rfc8471)
+   Defines `TokenBindingMessage`.
+   Specifically from [rfc8471#section-3](https://tools.ietf.org/html/rfc8471#section-3), describes how the TLS protocol (`Transport Layer Security (TLS) Extension for Token Binding Protocol Negotiation` [rfc 8472](https://tools.ietf.org/html/rfc8472)) _could_ be used to establish which public/private key pair the server will decide to use.  The client and server established which proof to use during the TLS negotiation:
+
+   ```
+   The Token Binding message is sent by the client to prove possession
+   of one or more private keys held by the client.  This message MUST be
+   sent if the client and server successfully negotiated the use of the
+   Token Binding protocol (e.g., via [RFC8472] or a different mechanism)
+   and MUST NOT be sent otherwise.  This message MUST be sent in the
+   client's first application protocol message.  This message MAY also
+   be sent in subsequent application protocol messages, proving
+   possession of additional private keys held by the same client; this
+   information can be used to facilitate Token Binding between more than
+   two communicating parties.  For example, [RFC8473] specifies an
+   encapsulation of the Token Binding message in HTTP application
+   protocol messages, as well as scenarios involving more than two
+   communicating parties.
+   ```
+
+   The code in this repo skips that steps and "just uses" a static keypair (i.,e it makes use of the "different mechanism" described above)
+
+
 * `Token Binding over HTTP` [rfc 8437](https://tools.ietf.org/html/rfc8473)
    Defines `Sec-Token-Binding` Header
 
-* `The Token Binding Protocol Version 1.0` [rfc 8471](https://tools.ietf.org/html/rfc8471)
-   Defines `TokenBindingMessage`
-
 * `OAuth 2.0 Token Binding` [draft-ietf-oauth-token-binding-08](https://tools.ietf.org/html/draft-ietf-oauth-token-binding-08)
 
-*  `Transport Layer Security (TLS) Extension for Token Binding Protocol Negotiation` [rfc 8472](https://tools.ietf.org/html/rfc8472)
+*  [https://github.com/google/token_bind](https://github.com/google/token_bind)
+   This runs the TLS client/server that performs the negotiation and then the TokenBinding exchange.  I have not gotten this to work yet..
 
-The bearer token will have an embedded field denoting which TokenBindingMessage is valid to check against:
+
+From the rfc, the bearer token will have an embedded field denoting which `TokenBindingMessage` is valid to check against:
+
 ```
  The value of the "tbh"
    member is the base64url encoding of the SHA-256 hash of the Token 
