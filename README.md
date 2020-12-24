@@ -201,8 +201,14 @@ Notice the JWT issued includes claims from both mechanism:
 ## Get Envoy
 
 Finally, get a copy of envoy that supports `wasm`
+
+>> **NOTE**:  we are using `envoy 1.17`
+
 ```
 docker cp `docker create envoyproxy/envoy-dev:latest`:/usr/local/bin/envoy /tmp/
+
+./envoy --version
+envoy  version: 483dd3007f15e47deed0a29d945ff776abb37815/1.17.0-dev/Clean/RELEASE/BoringSSL
 ```
 
 ## Deploy
