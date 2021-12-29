@@ -37,8 +37,6 @@ envoy_wasm_cc_binary(
     name = "envoy_filter_http_wasm_example.wasm",
     srcs = ["envoy_filter_http_wasm_example.cc"],
     deps = [
-        "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics",
-        "//source/common/common:base64_lib",
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_lite",
         "//examples/wasm-cc/tokenbound:tokenbound_cc_proto",         
     ],

@@ -6,14 +6,10 @@
 #include "proxy_wasm_intrinsics.h"
 #include "proxy_wasm_intrinsics_lite.pb.h"
 
-#include "common/common/base64.h"
-
 #include "google/protobuf/util/json_util.h"
 #include "examples/wasm-cc/tokenbound/tokenbound.pb.h"
 
 using google::protobuf::util::JsonParseOptions;
-using google::protobuf::util::error::Code;
-using google::protobuf::util::Status;
 
 using tokenbound::Config;
 
@@ -60,11 +56,10 @@ bool ExampleRootContext::onConfigure(size_t config_size) {
   const WasmDataPtr configuration = getBufferBytes(WasmBufferType::PluginConfiguration, 0, config_size);
 
     JsonParseOptions json_options;
-    const Status options_status = JsonStringToMessage(
+    if (!JsonStringToMessage(
         configuration->toString(),
         &config_,
-        json_options);
-    if (options_status != Status::OK) {
+        json_options).ok()) {
       LOG_WARN("Cannot parse plugin configuration JSON string: " + configuration->toString());
       return false;
     }
@@ -99,7 +94,8 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
   }
   LOG_INFO(std::string(" subject_peer_certificate -> ") + peer_cert);
 
-
+// #include "source/common/common/base64.h"
+//        "//source/common/common:base64_lib",
   //std::string data = Envoy::Base64::encode(fingerprint_string,strlen(fingerprint_string),false);
   
   auto secTokenBinding = getRequestHeader("Sec-Token-Binding");
