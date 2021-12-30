@@ -355,7 +355,7 @@ note that in the fulllog below, the `subject_peer_certificate` is just the DN, n
 
 the full log with envoy wasm:
 
-``log
+```log
 [2021-12-29 17:56:11.789][1767905][debug][http] [source/common/http/conn_manager_impl.cc:867] [C1][S3894653728372207290] request headers complete (end_stream=true):
 ':authority', 'http.domain.com'
 ':path', '/get'
@@ -436,9 +436,8 @@ the full log with envoy wasm:
 'access-control-allow-origin', '*'
 'access-control-allow-credentials', 'true'
 'x-envoy-upstream-service-time', '25'
-
-
 ```
+
 ---
 
 
