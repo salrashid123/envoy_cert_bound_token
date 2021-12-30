@@ -73,8 +73,8 @@ static_resources:
                     vm_id: "tb_root_id"
                     code:
                       local:
-                        #filename: "wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm"                      
-                        filename: "envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.wasm"
+                        filename: "wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm"                      
+                        #filename: "envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.wasm"
                       # remote:
                       #  sha256: 1c2ee066039ee9d4f6f4800c693156f15142914d657da940a9f02021e1deb517 
                       #  http_uri:
