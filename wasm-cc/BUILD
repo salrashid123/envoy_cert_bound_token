@@ -34,11 +34,12 @@ filegroup(
 )
 
 envoy_wasm_cc_binary(
-    name = "envoy_filter_http_wasm_example.wasm",
-    srcs = ["envoy_filter_http_wasm_example.cc"],
+    name = "envoy_filter_http_wasm_tokenbinding.wasm",
+    srcs = ["envoy_filter_http_wasm_tokenbinding.cc"],
     deps = [
         "@proxy_wasm_cpp_sdk//:proxy_wasm_intrinsics_lite",
-        "//examples/wasm-cc/tokenbound:tokenbound_cc_proto",         
+        "//examples/wasm-cc/tokenbound:tokenbound_cc_proto", 
+        "//examples/wasm-cc/base64:base64_lib",             
     ],
 )
 

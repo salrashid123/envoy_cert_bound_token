@@ -1,7 +1,10 @@
-// NOLINT(namespace-envoy)
+
 #include <string>
+
 #include <string_view>
 #include <unordered_map>
+
+#include "base64/base64.h"
 
 #include "proxy_wasm_intrinsics.h"
 #include "proxy_wasm_intrinsics_lite.pb.h"
@@ -9,13 +12,14 @@
 #include "google/protobuf/util/json_util.h"
 #include "examples/wasm-cc/tokenbound/tokenbound.pb.h"
 
-using google::protobuf::util::JsonParseOptions;
 
+using google::protobuf::util::JsonParseOptions;
 using tokenbound::Config;
 
-class ExampleRootContext : public RootContext {
+
+class TokenBindingRootContext : public RootContext {
 public:
-  explicit ExampleRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
+  explicit TokenBindingRootContext(uint32_t id, std::string_view root_id) : RootContext(id, root_id) {}
   bool onStart(size_t) override;
   bool onConfigure(size_t) override;
   void onTick() override;
@@ -23,9 +27,11 @@ public:
   tokenbound::Config config_;
 };
 
-class ExampleContext : public Context {
+
+
+class TokenBindingContext : public Context {
 public:
-  explicit ExampleContext(uint32_t id, RootContext* root) : Context(id, root), root_(static_cast<ExampleRootContext*>(static_cast<void*>(root))) {}
+  explicit TokenBindingContext(uint32_t id, RootContext* root) : Context(id, root), root_(static_cast<TokenBindingRootContext*>(static_cast<void*>(root))) {}
 
   void onCreate() override;
   FilterHeadersStatus onRequestHeaders(uint32_t headers, bool end_of_stream) override;
@@ -38,18 +44,20 @@ public:
   void onDelete() override;
 
 private:
-  ExampleRootContext* root_;
+  TokenBindingRootContext* root_;
 };
-static RegisterContextFactory register_ExampleContext(CONTEXT_FACTORY(ExampleContext),
-                                                      ROOT_FACTORY(ExampleRootContext),
-                                                      "my_root_id");
 
-bool ExampleRootContext::onStart(size_t) {
+
+static RegisterContextFactory register_TokenBindingContext(CONTEXT_FACTORY(TokenBindingContext),
+                                                      ROOT_FACTORY(TokenBindingRootContext),
+                                                      "tb_root_id");
+
+bool TokenBindingRootContext::onStart(size_t) {
   LOG_TRACE("onStart");
   return true;
 }
 
-bool ExampleRootContext::onConfigure(size_t config_size) {
+bool TokenBindingRootContext::onConfigure(size_t config_size) {
   LOG_TRACE("onConfigure");
   proxy_set_tick_period_milliseconds(1000); // 1 sec
 
@@ -63,15 +71,15 @@ bool ExampleRootContext::onConfigure(size_t config_size) {
       LOG_WARN("Cannot parse plugin configuration JSON string: " + configuration->toString());
       return false;
     }
-    LOG_DEBUG("JWT filter payload Name: " + config_.jwtfiltername());
+    LOG_DEBUG("TokenBinding Configured for filter " + config_.jwtfiltername());
   return true;
 }
 
-void ExampleRootContext::onTick() { LOG_TRACE("onTick"); }
+void TokenBindingRootContext::onTick() { LOG_TRACE("onTick"); }
 
-void ExampleContext::onCreate() { LOG_WARN(std::string("onCreate " + std::to_string(id()))); }
+void TokenBindingContext::onCreate() { LOG_WARN(std::string("onCreate " + std::to_string(id()))); }
 
-FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
+FilterHeadersStatus TokenBindingContext::onRequestHeaders(uint32_t, bool) {
   LOG_DEBUG(std::string("onRequestHeaders ") + std::to_string(id()));
   auto result = getRequestHeaderPairs();
   auto pairs = result->pairs();
@@ -80,31 +88,44 @@ FilterHeadersStatus ExampleContext::onRequestHeaders(uint32_t, bool) {
     LOG_DEBUG(std::string(p.first) + std::string(" -> ") + std::string(p.second));
   }
 
-  std::string value;
-  if (!getValue({"metadata", "filter_metadata", "envoy.filters.http.jwt_authn", root_->config_.jwtfiltername(), "cbf", "x5t#S256"}, &value)) {
+  std::string digest_from_cbf_header;
+  if (!getValue({"metadata", "filter_metadata", "envoy.filters.http.jwt_authn", root_->config_.jwtfiltername(), "cbf", "x5t#S256"}, &digest_from_cbf_header)) {
     LOG_ERROR("No jwt_payload metadata present");
     closeRequest();
   }
-  LOG_INFO(std::string(" x5t#S256 -> ") + value);
+  LOG_DEBUG(std::string(" x5t#S256 -> ") + digest_from_cbf_header);
 
   std::string peer_cert;
   if (!getValue({"connection", "subject_peer_certificate"}, &peer_cert)) {
     LOG_ERROR("missing subject_peer_certificate value");
     closeRequest();
   }
-  LOG_INFO(std::string(" subject_peer_certificate -> ") + peer_cert);
+  LOG_DEBUG(std::string(" subject_peer_certificate: ") + peer_cert);
 
-// #include "source/common/common/base64.h"
-//        "//source/common/common:base64_lib",
-  //std::string data = Envoy::Base64::encode(fingerprint_string,strlen(fingerprint_string),false);
+
+  std::string sha256_peer_certificate_digest;
+  if (!getValue({"connection", "sha256_peer_certificate_digest"}, &sha256_peer_certificate_digest)) {
+    LOG_ERROR("missing sha256_peer_certificate_digest value");
+    closeRequest();
+  }
+
+  std::string encoded_digest = base64_encode(hex2bin(sha256_peer_certificate_digest));
+
+  LOG_DEBUG(std::string("sha256_peer_certificate_digest: ") + encoded_digest);
+
+  if (encoded_digest.compare(digest_from_cbf_header) != 0) {
+    LOG_ERROR("sha256_peer_certificate_digest does not match digest_from_cbf_header");
+    closeRequest();
+  }
+   LOG_DEBUG(std::string("sha256_peer_certificate_digest and digest_from_cbf_header matched"));
   
   auto secTokenBinding = getRequestHeader("Sec-Token-Binding");
-  LOG_INFO(std::string("Sec-Token-Binding Header ") + std::string(secTokenBinding->view()));
+  LOG_DEBUG(std::string("Sec-Token-Binding Header ") + std::string(secTokenBinding->view()));
 
   return FilterHeadersStatus::Continue;
 }
 
-FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
+FilterHeadersStatus TokenBindingContext::onResponseHeaders(uint32_t, bool) {
   LOG_DEBUG(std::string("onResponseHeaders ") + std::to_string(id()));
   auto result = getResponseHeaderPairs();
   auto pairs = result->pairs();
@@ -115,20 +136,22 @@ FilterHeadersStatus ExampleContext::onResponseHeaders(uint32_t, bool) {
   return FilterHeadersStatus::Continue;
 }
 
-FilterDataStatus ExampleContext::onRequestBody(size_t body_buffer_length,
+FilterDataStatus TokenBindingContext::onRequestBody(size_t body_buffer_length,
                                                bool /* end_of_stream */) {
   auto body = getBufferBytes(WasmBufferType::HttpRequestBody, 0, body_buffer_length);
   LOG_DEBUG(std::string("onRequestBody ") + std::string(body->view()));
   return FilterDataStatus::Continue;
 }
 
-FilterDataStatus ExampleContext::onResponseBody(size_t /* body_buffer_length */,
+FilterDataStatus TokenBindingContext::onResponseBody(size_t /* body_buffer_length */,
                                                 bool /* end_of_stream */) {
   return FilterDataStatus::Continue;
 }
 
-void ExampleContext::onDone() { LOG_WARN(std::string("onDone " + std::to_string(id()))); }
+void TokenBindingContext::onDone() { LOG_WARN(std::string("onDone " + std::to_string(id()))); }
 
-void ExampleContext::onLog() { LOG_WARN(std::string("onLog " + std::to_string(id()))); }
+void TokenBindingContext::onLog() { LOG_WARN(std::string("onLog " + std::to_string(id()))); }
 
-void ExampleContext::onDelete() { LOG_WARN(std::string("onDelete " + std::to_string(id()))); }
+void TokenBindingContext::onDelete() { LOG_WARN(std::string("onDelete " + std::to_string(id()))); }
+
+
