@@ -331,9 +331,10 @@ However, I was able to modify envoy to emit those values and see the inside a wa
 
 (as of `12/30/21`)
 
-The modifiecations to upstream were simple (from commit `96701cb24611b0f3aac1cc0dd8bf8589fbdf8e9e`)
+You can either make the changes below or download the envoy i compiled alredy from the 'release' page on this git repo.
 
-emit the cert digest:
+
+The modifiecations to upstream were simple  (from commit `96701cb24611b0f3aac1cc0dd8bf8589fbdf8e9e`).
 
 ```text
 # git diff
@@ -366,9 +367,6 @@ index 2f3f2539c..8107d1347 100644
  constexpr absl::string_view Source = "source";
 ```
 
-
-Eitherway, you'll need a version of envoy that has the diff above compiled in.
-
 For me, this what i did
 
 ```bash
@@ -388,6 +386,26 @@ For me, this what i did
 #     975f412ff2381dfb5f2ef5199a21b0715ae4cf8f775cf6bdce8b2a0ab5140565  /tmp/envoy-docker-build/envoy/source/exe/envoy/envoy
 ```
 
+#### Build WASM
+
+You can either use the wasm binary thats part of this repo or build your own:
+
+to build your own,
+
+```bash
+ git clone https://github.com/envoyproxy/envoy.git
+ rm -rf envoy/examples/wasm-cc/
+ cp -R wasm-cc  envoy/examples/
+ cd envoy
+ git checkout tags/v1.20.1
+
+bazel build //examples/wasm-cc:envoy_filter_http_wasm_tokenbinding.wasm
+```
+
+The newly built envoy binary should be at: `envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.wasm`
+
+Now, 
+
 `wasm.yaml` specifies the wasm binary directly from this repo.
 
 ```yaml
@@ -402,11 +420,12 @@ For me, this what i did
 If you compiled your own, modify the path to your own wasm
 
 
-Finally run the modified envoy binary
+Finally run the *modified* envoy binary (which you can download from this repo to /tmp/envoy_with_tokenbinding_wasm)
 ```
-/tmp/envoy_tbf -c wasm.yaml -l debug
+/tmp/envoy_with_tokenbinding_wasm -c wasm.yaml -l debug
 ```
 
+(note, i've uploaded the binary to the 'Release' page in this repo)
 
 If you send in a curl request like the one above from LUA, you will see, you'll see the certificate fingerprints were extracted from the JWT and TLS session and compared.
 

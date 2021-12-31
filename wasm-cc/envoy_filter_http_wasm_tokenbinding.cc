@@ -115,6 +115,7 @@ FilterHeadersStatus TokenBindingContext::onRequestHeaders(uint32_t, bool) {
 
   if (encoded_digest.compare(digest_from_cbf_header) != 0) {
     LOG_ERROR("sha256_peer_certificate_digest does not match digest_from_cbf_header");
+    // TODO: send sendLocalResponse...the close just rudely terminates...
     closeRequest();
   }
    LOG_DEBUG(std::string("sha256_peer_certificate_digest and digest_from_cbf_header matched"));
