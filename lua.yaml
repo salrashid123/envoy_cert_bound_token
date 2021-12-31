@@ -124,14 +124,6 @@ static_resources:
                     if jwtSig ~= peerSig then
                       request_handle:respond({[":status"] = "403"},"Could not verify bound token")
                     end      
-                    
-                    -- 2. TODO: Sec-Token-Binding
-                    local secHeader = headers:get("Sec-Token-Binding")
-                    if secHeader == nil then
-                      request_handle:respond({[":status"] = "403"},"Sec-Token-Binding in header")
-                    end
-                    request_handle:logInfo("Sec-Token-Binding Header " ..secHeader)
-                    request_handle:logInfo("urlEncodedPemEncodedPeerCertificate " ..stream:downstreamSslConnection():urlEncodedPemEncodedPeerCertificate())
 
                   else 
                     request_handle:respond({[":status"] = "403"},"mTLS Required")

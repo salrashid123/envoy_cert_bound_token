@@ -120,9 +120,6 @@ FilterHeadersStatus TokenBindingContext::onRequestHeaders(uint32_t, bool) {
   }
    LOG_DEBUG(std::string("sha256_peer_certificate_digest and digest_from_cbf_header matched"));
   
-  auto secTokenBinding = getRequestHeader("Sec-Token-Binding");
-  LOG_DEBUG(std::string("Sec-Token-Binding Header ") + std::string(secTokenBinding->view()));
-
   return FilterHeadersStatus::Continue;
 }
 

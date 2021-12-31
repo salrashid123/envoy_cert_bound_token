@@ -18,13 +18,11 @@ var (
 	capubFile     = flag.String("capubFile", "../certs/tls-ca.crt", "Path to input Public CA key")
 	caprivFile    = flag.String("caprivFile", "../certs/tls-ca.key", "Path to input Private key to sign the JWT")
 	clientpubCert = flag.String("clientpubCert", "../certs/clientjwt.crt", "Path to public certificate to create X5T")
-	tbh           = flag.String("tbh", "dBPwPU6FpL1xgsUfqxZOMe4fXkR1UINjx3DK2AkNwSs", "TBH value to use")
 )
 
 const ()
 
 type CBF struct {
-	TBH string `json:"tbh,omitempty"`
 	X5T string `json:"x5t#S256,omitempty"`
 }
 
@@ -80,7 +78,6 @@ func main() {
 	}
 
 	c := CBF{
-		TBH: *tbh,
 		X5T: f,
 	}
 
