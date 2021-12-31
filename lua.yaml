@@ -114,8 +114,8 @@ static_resources:
 
 
                     -- 1. Validate using 
-                    local cbf = meta.cbf
-                    local jwtSig = cbf["x5t#S256"]
+                    local cnf = meta.cnf
+                    local jwtSig = cnf["x5t#S256"]
                     if jwtSig == nil then
                         request_handle:respond({[":status"] = "403"},"Token bound claim not provided in JWT")
                     end

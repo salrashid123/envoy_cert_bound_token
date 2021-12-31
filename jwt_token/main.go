@@ -22,13 +22,13 @@ var (
 
 const ()
 
-type CBF struct {
+type CNF struct {
 	X5T string `json:"x5t#S256,omitempty"`
 }
 
 type CustomClaimsExample struct {
 	*jwt.StandardClaims
-	CBF `json:"cbf"`
+	CNF `json:"cnf"`
 }
 
 func main() {
@@ -77,7 +77,7 @@ func main() {
 		log.Fatalf("Error parsing private key: %v", err)
 	}
 
-	c := CBF{
+	c := CNF{
 		X5T: f,
 	}
 

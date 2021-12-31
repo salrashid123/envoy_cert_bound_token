@@ -88,12 +88,12 @@ FilterHeadersStatus TokenBindingContext::onRequestHeaders(uint32_t, bool) {
     LOG_DEBUG(std::string(p.first) + std::string(" -> ") + std::string(p.second));
   }
 
-  std::string digest_from_cbf_header;
-  if (!getValue({"metadata", "filter_metadata", "envoy.filters.http.jwt_authn", root_->config_.jwtfiltername(), "cbf", "x5t#S256"}, &digest_from_cbf_header)) {
+  std::string digest_from_cnf_header;
+  if (!getValue({"metadata", "filter_metadata", "envoy.filters.http.jwt_authn", root_->config_.jwtfiltername(), "cnf", "x5t#S256"}, &digest_from_cnf_header)) {
     LOG_ERROR("No jwt_payload metadata present");
     closeRequest();
   }
-  LOG_DEBUG(std::string(" x5t#S256 -> ") + digest_from_cbf_header);
+  LOG_DEBUG(std::string(" x5t#S256 -> ") + digest_from_cnf_header);
 
   std::string peer_cert;
   if (!getValue({"connection", "subject_peer_certificate"}, &peer_cert)) {
@@ -113,12 +113,12 @@ FilterHeadersStatus TokenBindingContext::onRequestHeaders(uint32_t, bool) {
 
   LOG_DEBUG(std::string("sha256_peer_certificate_digest: ") + encoded_digest);
 
-  if (encoded_digest.compare(digest_from_cbf_header) != 0) {
-    LOG_ERROR("sha256_peer_certificate_digest does not match digest_from_cbf_header");
+  if (encoded_digest.compare(digest_from_cnf_header) != 0) {
+    LOG_ERROR("sha256_peer_certificate_digest does not match digest_from_cnf_claim");
     // TODO: send sendLocalResponse...the close just rudely terminates...
     closeRequest();
   }
-   LOG_DEBUG(std::string("sha256_peer_certificate_digest and digest_from_cbf_header matched"));
+   LOG_DEBUG(std::string("sha256_peer_certificate_digest and digest_from_cnf_claim matched"));
   
   return FilterHeadersStatus::Continue;
 }
