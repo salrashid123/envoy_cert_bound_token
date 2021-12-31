@@ -110,7 +110,7 @@ docker cp `docker create envoyproxy/envoy-dev:latest`:/usr/local/bin/envoy /tmp/
    version: 483dd3007f15e47deed0a29d945ff776abb37815/1.17.0-dev/Clean/RELEASE/BoringSSL
 ```
 
-## Deploy
+### Deploy
 
 We are now ready to startup envoy and give it all a go.  You can try either wasm (eventually) or lua 
 
@@ -124,7 +124,7 @@ To test with `LUA`, simply run
 /tmp/envoy -c lua.yaml -l debug
 ```
 
-## CURL
+### CURL
 
 Invoke the endpoint
 
@@ -319,11 +319,17 @@ Finally run the *modified* envoy binary (which you can download from this repo t
 If you send in a curl request like the one above from LUA, you will see, you'll see the certificate fingerprints were extracted from the JWT and TLS session and compared.
 
 ```log
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:96]::onRequestHeaders()  x5t#S256 -> kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
+[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
+   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:96]::onRequestHeaders()
+      x5t#S256 -> kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
 
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:114]::onRequestHeaders() sha256_peer_certificate_digest: kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
+[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
+   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:114]::onRequestHeaders() 
+      sha256_peer_certificate_digest: kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
 
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:121]::onRequestHeaders() sha256_peer_certificate_digest and digest_from_cnf_claim matched
+[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
+   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:121]::onRequestHeaders()
+      sha256_peer_certificate_digest and digest_from_cnf_claim matched
 ```
 
 The full wasm log
@@ -362,14 +368,18 @@ The full wasm log
 [2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() x-forwarded-proto -> https
 [2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() x-request-id -> af99c765-fdcc-4359-bfb0-983c4e837f78
 
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:96]::onRequestHeaders()  x5t#S256 -> kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
+[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
+   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:96]::onRequestHeaders() 
+   x5t#S256 -> kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
 
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:103]::onRequestHeaders()  subject_peer_certificate: CN=sts.domain.com,OU=Enterprise,O=Google,C=US
+[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
+   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:114]::onRequestHeaders() 
+   sha256_peer_certificate_digest: kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
 
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:114]::onRequestHeaders() sha256_peer_certificate_digest: kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
 
-
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:121]::onRequestHeaders() sha256_peer_certificate_digest and digest_from_cnf_claim matched
+[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: 
+   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:121]::onRequestHeaders() 
+   sha256_peer_certificate_digest and digest_from_cnf_claim matched
 
 [2021-12-31 09:07:15.273][3360383][debug][router] [source/common/router/router.cc:457] [C0][S6778589954990283357] cluster 'service_httpbin' match for URL '/get'
 [2021-12-31 09:07:15.273][3360383][debug][router] [source/common/router/router.cc:673] [C0][S6778589954990283357] router decoding headers:
