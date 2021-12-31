@@ -331,7 +331,7 @@ However, I was able to modify envoy to emit those values and see the inside a wa
 
 (as of `12/30/21`)
 
-You can either make the changes below or download the envoy i compiled alredy from the 'release' page on this git repo.
+You can either make the changes below or download the envoy i compiled alredy from the 'release' page on this git repo [here](https://storage.googleapis.com/pki.esodemoapp2.com/envoy_with_tokenbinding_wasm)
 
 
 The modifiecations to upstream were simple  (from commit `96701cb24611b0f3aac1cc0dd8bf8589fbdf8e9e`).
@@ -425,7 +425,7 @@ Finally run the *modified* envoy binary (which you can download from this repo t
 /tmp/envoy_with_tokenbinding_wasm -c wasm.yaml -l debug
 ```
 
-(note, i've uploaded the binary to the 'Release' page in this repo)
+(note, i've uploaded the binary to the 'Release' page in this repo [here](https://storage.googleapis.com/pki.esodemoapp2.com/envoy_with_tokenbinding_wasm))
 
 If you send in a curl request like the one above from LUA, you will see, you'll see the certificate fingerprints were extracted from the JWT and TLS session and compared.
 
