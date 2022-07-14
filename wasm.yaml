@@ -76,9 +76,9 @@ static_resources:
                         filename: "wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm"                      
                         #filename: "envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.wasm"
                       # remote:
-                      #  sha256: 536ffb909127ad901ba6f475c9bc98ce8171a3076989ba72d7c0c71f94a3ee1c 
+                      #  sha256: a46850d3ac1aa3215e8b5bfaf973ddeeea549c6e33a4d588001590b2195836f1
                       #  http_uri:
-                      #    uri: https://salrashid123/envoy_cert_bound_token/blob/release-1.0/envoy_filter_http_wasm_tokenbinding.wasm?raw=true
+                      #    uri: https://salrashid123/envoy_cert_bound_token/blob/release-2.0/envoy_filter_http_wasm_tokenbinding.wasm?raw=true
                       #    cluster: com_github
                       #    timeout:
                       #      seconds: 5
