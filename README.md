@@ -11,7 +11,9 @@ Binding the token to the cert reduces the security risk of bearer tokens which a
 In the easiest flow, the bearer token that is ultimately used against a resource gets minted by a service which will verify that the client is infact in possession of certificate.  One way to do that is to use the same mTLS certs to interact with the Authorization server that will eventually get used on the Resource Server.  The more complicated flows involve multiple certificates but those flows are not described here.
 
 >> `12/1/20`: NOTE:  the wasm plugin is not yet ready.  It is pending implementation of [envoy issue#14229](https://github.com/envoyproxy/envoy/issues/14229).  However, i do describe how to build the plugin anyway.
+
 >> `12/29/21`: the wasm plugin is still not ready since envoy wasm doesn't surface the cert signature.  However, i was able to modify envoy to emit those values and actually process them in the sample wasm binary below
+
 >> `14/7/22`: [issue#14229](https://github.com/envoyproxy/envoy/issues/14229) merged so envoy+wasm can now enforce cert-boound access
 
 ---
@@ -356,4 +358,4 @@ The full wasm log
 
 ```
 
-Again, you should wait for the upstream changes
+
