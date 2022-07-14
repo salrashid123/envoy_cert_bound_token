@@ -107,6 +107,7 @@ FilterHeadersStatus TokenBindingContext::onRequestHeaders(uint32_t, bool) {
   if (!getValue({"connection", "sha256_peer_certificate_digest"}, &sha256_peer_certificate_digest)) {
     LOG_ERROR("missing sha256_peer_certificate_digest value");
     closeRequest();
+    return FilterHeadersStatus::StopIteration;
   }
 
   std::string encoded_digest = base64_encode(hex2bin(sha256_peer_certificate_digest));
@@ -117,6 +118,7 @@ FilterHeadersStatus TokenBindingContext::onRequestHeaders(uint32_t, bool) {
     LOG_ERROR("sha256_peer_certificate_digest does not match digest_from_cnf_claim");
     // TODO: send sendLocalResponse...the close just rudely terminates...
     closeRequest();
+    return FilterHeadersStatus::StopIteration;
   }
    LOG_DEBUG(std::string("sha256_peer_certificate_digest and digest_from_cnf_claim matched"));
   

@@ -12,6 +12,7 @@ In the easiest flow, the bearer token that is ultimately used against a resource
 
 >> `12/1/20`: NOTE:  the wasm plugin is not yet ready.  It is pending implementation of [envoy issue#14229](https://github.com/envoyproxy/envoy/issues/14229).  However, i do describe how to build the plugin anyway.
 >> `12/29/21`: the wasm plugin is still not ready since envoy wasm doesn't surface the cert signature.  However, i was able to modify envoy to emit those values and actually process them in the sample wasm binary below
+>> `14/7/22`: [issue#14229](https://github.com/envoyproxy/envoy/issues/14229) merged so envoy+wasm can now enforce cert-boound access
 
 ---
 
@@ -40,10 +41,10 @@ For example, if the public cert used by the client is `clientjwt.crt`, then the 
 
 ```bash
 $ openssl x509 -in clientjwt.crt -outform DER | openssl dgst -sha256 | cut -d" " -f2
-915fc54c3fc19651ca22600c96aa9b126e8ba073b44185804cee5ff36dd87240
+b00d38a52273af0238406b74f8d26f8273252aded332d73b4842b2d2e666ba01
 
-$ echo "915fc54c3fc19651ca22600c96aa9b126e8ba073b44185804cee5ff36dd87240" | xxd -r -p - | openssl enc -a | tr -d '=' | tr '/+' '_-'
-kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
+$ echo "b00d38a52273af0238406b74f8d26f8273252aded332d73b4842b2d2e666ba01" | xxd -r -p - | openssl enc -a | tr -d '=' | tr '/+' '_-'
+sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE
 ```
 
 Which eventually is sealed into a bearer token (JWT in this case) using the following claim:
@@ -51,7 +52,7 @@ Which eventually is sealed into a bearer token (JWT in this case) using the foll
 ```json
 {
   "cnf": {
-    "x5t#S256": "kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA"
+    "x5t#S256": "sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE"
   }
 }
 ```
@@ -69,7 +70,7 @@ cd jwt_token/
 $ go run main.go --capubFile ../certs/tls-ca.crt  \
    --caprivFile ../certs/tls-ca.key   --clientpubCert ../certs/clientjwt.crt 
 
-2021/12/31 08:51:10 eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2NzE3MTcwNzAsImlhdCI6MTY0MDk1ODY3MCwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6ImtWX0ZURF9CbGxIS0ltQU1scXFiRW02TG9ITzBRWVdBVE81ZjgyM1lja0EifX0.eiUtoKxiQL98M-_lFj5nlSBhW0pm7vBGzjUA9I6rHpbElQ9GnGXKrqK3mP_2s5J6KhIFzjSfYHA3MUNi4v4MUQ72IKRlkBqyFDO0un7wun1aX1IPit9EZuEiZcBO-4FUdEiKO6eh_8q_e3OFMtUs3YfQYXKi2L11L9o62YyvD5DU0nO52UJrqDfUlMp78Za1TNaKgNCifaB7E0PrcTGr60K72GWslRicyqA6yHfJ7o-uc2q0hLV7vcdWnKVH9dnCnH7mQBF0xtxEgj1_8QGW03xmY9lEvMuSzcvbpxnyaoZpCWw-ysUnEplnQK6exiq0Y0a4Qzxn3e5mJebKWjXsWQ
+2022/07/13 20:54:32 eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2ODg1MTg0NzIsImlhdCI6MTY1Nzc2MDA3MiwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6InNBMDRwU0p6cndJNFFHdDAtTkp2Z25NbEt0N1RNdGM3U0VLeTB1Wm11Z0UifX0.UKW4BUvudUG2g8zspchwafSASylig-GCf8ZNL3efcdxQ7MmuK2dod8X4AySJy4U1cTNL6kG81tLWFFrkrDTirm6rua45zhQ9p0ysuJgDhG7uJDF1IvbMRgj7VJzCir_8wv_99-JkJpQ9CWye0IxjIOgTUUbBTx2snrmHoJ8q-XKvGVVxN15IZJcZSFI1vfIV4x5_7HoCc9NT1CNyXnLzcvWFu4NIVaxxU1F9kx-5JiBeSZ5FN5h2uaryLvFfKSisgnlTM2e6Qro3EBNvHqfKeJ9YA0uZbpjf-SVAsqg4KS-7407elVORtuNXgt-Odv3M3LGfkAFYsy46cGbOi_W8Ow
 ```
 
 will give a token like
@@ -82,11 +83,11 @@ will give a token like
 }
 {
   "aud": "https://foo.bar",
-  "exp": 1671717070,
-  "iat": 1640958670,
+  "exp": 1688518472,
+  "iat": 1657760072,
   "iss": "https://myissuer",
   "cnf": {
-    "x5t#S256": "kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA"
+    "x5t#S256": "sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE"
   }
 }
 ```
@@ -94,7 +95,7 @@ will give a token like
 export the value
 
 ```bash
-export TOKEN=eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2NzE3MTcwNzAsImlhdCI6MTY0MDk1ODY3MCwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6ImtWX0ZURF9CbGxIS0ltQU1scXFiRW02TG9ITzBRWVdBVE81ZjgyM1lja0EifX0.eiUtoKxiQL98M-_lFj5nlSBhW0pm7vBGzjUA9I6rHpbElQ9GnGXKrqK3mP_2s5J6KhIFzjSfYHA3MUNi4v4MUQ72IKRlkBqyFDO0un7wun1aX1IPit9EZuEiZcBO-4FUdEiKO6eh_8q_e3OFMtUs3YfQYXKi2L11L9o62YyvD5DU0nO52UJrqDfUlMp78Za1TNaKgNCifaB7E0PrcTGr60K72GWslRicyqA6yHfJ7o-uc2q0hLV7vcdWnKVH9dnCnH7mQBF0xtxEgj1_8QGW03xmY9lEvMuSzcvbpxnyaoZpCWw-ysUnEplnQK6exiq0Y0a4Qzxn3e5mJebKWjXsWQ
+export TOKEN=eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2ODg1MTgxMTcsImlhdCI6MTY1Nzc1OTcxNywiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6InNBMDRwU0p6cndJNFFHdDAtTkp2Z25NbEt0N1RNdGM3U0VLeTB1Wm11Z0UifX0.tpZg6srTR2sFt9gca7fY1ufdEQksaNZLZJAE1DmTdgONLuqSa_ifyvL9_o_TZVse-hhqKPx0X91yve15ROP5rorMeadWjK2sNHKNzbflM7Sa00x1UfJtX7rOkKm8r3QPYfMqXn1Ptwl8sB1yocCbhtG4vkQp-H3_olT0kjG_mno0bki8S_y_CNwN0hAAaZqSxjPZGOLzmPwcrHzJa5HZ3WptmbtcDuBT1ImHEQEb4j2yQPR1cE8I-N2TwQSGGtClKOmjG4I8gYsPl1IG70gW8kd7yyd_0mn-Ztpn6qIcBAStfDNudVmsVspHyqe5kzhuB_O2_18UECpXVHU1V_ftzQ
 ```
 
 ## Get Envoy
@@ -106,8 +107,7 @@ Finally, get a copy of envoy that supports `wasm`
 ```bash
 docker cp `docker create envoyproxy/envoy-dev:latest`:/usr/local/bin/envoy /tmp/
 
-/tmp/envoy --version
-   version: 483dd3007f15e47deed0a29d945ff776abb37815/1.17.0-dev/Clean/RELEASE/BoringSSL
+#  (i used docker cp `docker create envoyproxy/envoy-dev@sha256:045063c5fe6f1209cb9cb56c092e50dfab2c6619715e5ee9b85425d13fecd124`:/usr/local/bin/envoy /tmp/)
 ```
 
 ### Deploy
@@ -141,142 +141,71 @@ curl -v -H "Authorization: Bearer $TOKEN" \
 In the envoy logs, you should see the jwt claims extracted and then validated:
 
 ```log
-[2021-12-31 08:53:17.082][3341883][debug][http] [source/common/http/conn_manager_impl.cc:274] [C0] new stream
-[2021-12-31 08:53:17.082][3341883][debug][http] [source/common/http/conn_manager_impl.cc:867] [C0][S4393481483203694172] request headers complete (end_stream=true):
+[2022-07-13 21:00:54.941][2922772][debug][conn_handler] [source/server/active_tcp_listener.cc:142] [C0] new connection from 127.0.0.1:42440
+[2022-07-13 21:00:54.946][2922772][debug][http] [source/common/http/conn_manager_impl.cc:299] [C0] new stream
+[2022-07-13 21:00:54.946][2922772][debug][http] [source/common/http/conn_manager_impl.cc:904] [C0][S6139208093804265673] request headers complete (end_stream=true):
 ':authority', 'http.domain.com'
 ':path', '/get'
 ':method', 'GET'
-'user-agent', 'curl/7.79.1'
+'user-agent', 'curl/7.83.1'
 'accept', '*/*'
-'authorization', 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2NzE3MTcwNzAsImlhdCI6MTY0MDk1ODY3MCwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6ImtWX0ZURF9CbGxIS0ltQU1scXFiRW02TG9ITzBRWVdBVE81ZjgyM1lja0EifX0.eiUtoKxiQL98M-_lFj5nlSBhW0pm7vBGzjUA9I6rHpbElQ9GnGXKrqK3mP_2s5J6KhIFzjSfYHA3MUNi4v4MUQ72IKRlkBqyFDO0un7wun1aX1IPit9EZuEiZcBO-4FUdEiKO6eh_8q_e3OFMtUs3YfQYXKi2L11L9o62YyvD5DU0nO52UJrqDfUlMp78Za1TNaKgNCifaB7E0PrcTGr60K72GWslRicyqA6yHfJ7o-uc2q0hLV7vcdWnKVH9dnCnH7mQBF0xtxEgj1_8QGW03xmY9lEvMuSzcvbpxnyaoZpCWw-ysUnEplnQK6exiq0Y0a4Qzxn3e5mJebKWjXsWQ'
+'authorization', 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2ODg1MTg0NzIsImlhdCI6MTY1Nzc2MDA3MiwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6InNBMDRwU0p6cndJNFFHdDAtTkp2Z25NbEt0N1RNdGM3U0VLeTB1Wm11Z0UifX0.UKW4BUvudUG2g8zspchwafSASylig-GCf8ZNL3efcdxQ7MmuK2dod8X4AySJy4U1cTNL6kG81tLWFFrkrDTirm6rua45zhQ9p0ysuJgDhG7uJDF1IvbMRgj7VJzCir_8wv_99-JkJpQ9CWye0IxjIOgTUUbBTx2snrmHoJ8q-XKvGVVxN15IZJcZSFI1vfIV4x5_7HoCc9NT1CNyXnLzcvWFu4NIVaxxU1F9kx-5JiBeSZ5FN5h2uaryLvFfKSisgnlTM2e6Qro3EBNvHqfKeJ9YA0uZbpjf-SVAsqg4KS-7407elVORtuNXgt-Odv3M3LGfkAFYsy46cGbOi_W8Ow'
 
-[2021-12-31 08:53:17.082][3341883][debug][http] [source/common/http/filter_manager.cc:835] [C0][S4393481483203694172] request end stream
-[2021-12-31 08:53:17.082][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:158] Called Filter : setDecoderFilterCallbacks
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:53] Called Filter : decodeHeaders
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/matcher.cc:70] Prefix requirement '/' matched.
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/extractor.cc:249] extract authorizationBearer 
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:133] custom-jwt: JWT authentication starts (allow_failed=false), tokens size=1
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:144] custom-jwt: startVerify: tokens size 1
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:157] custom-jwt: Parse Jwt eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2NzE3MTcwNzAsImlhdCI6MTY0MDk1ODY3MCwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6ImtWX0ZURF9CbGxIS0ltQU1scXFiRW02TG9ITzBRWVdBVE81ZjgyM1lja0EifX0.eiUtoKxiQL98M-_lFj5nlSBhW0pm7vBGzjUA9I6rHpbElQ9GnGXKrqK3mP_2s5J6KhIFzjSfYHA3MUNi4v4MUQ72IKRlkBqyFDO0un7wun1aX1IPit9EZuEiZcBO-4FUdEiKO6eh_8q_e3OFMtUs3YfQYXKi2L11L9o62YyvD5DU0nO52UJrqDfUlMp78Za1TNaKgNCifaB7E0PrcTGr60K72GWslRicyqA6yHfJ7o-uc2q0hLV7vcdWnKVH9dnCnH7mQBF0xtxEgj1_8QGW03xmY9lEvMuSzcvbpxnyaoZpCWw-ysUnEplnQK6exiq0Y0a4Qzxn3e5mJebKWjXsWQ
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:167] custom-jwt: Verifying JWT token of issuer https://myissuer
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:315] custom-jwt: JWT token verification completed with: OK
-[2021-12-31 08:53:17.083][3341883][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:110] Jwt authentication completed with: OK
-
-
-
-
-[2021-12-31 08:53:17.083][3341883][info][lua] [source/extensions/filters/http/lua/lua_filter.cc:795] script log: Peer Signature: kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
-
-
-[2021-12-31 08:53:17.083][3341883][info][lua] [source/extensions/filters/http/lua/lua_filter.cc:795] script log: JWT Signature: kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
-
-
-
-[2021-12-31 08:53:17.083][3341883][debug][lua] [source/extensions/filters/common/lua/lua.cc:39] coroutine finished
-[2021-12-31 08:53:17.083][3341883][debug][router] [source/common/router/router.cc:457] [C0][S4393481483203694172] cluster 'service_httpbin' match for URL '/get'
-[2021-12-31 08:53:17.083][3341883][debug][router] [source/common/router/router.cc:673] [C0][S4393481483203694172] router decoding headers:
+[2022-07-13 21:00:54.946][2922772][debug][http] [source/common/http/filter_manager.cc:841] [C0][S6139208093804265673] request end stream
+[2022-07-13 21:00:54.946][2922772][debug][connection] [./source/common/network/connection_impl.h:89] [C0] current connecting state: false
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:158] Called Filter : setDecoderFilterCallbacks
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:53] Called Filter : decodeHeaders
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/matcher.cc:71] Prefix requirement '/' matched.
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/extractor.cc:250] extract authorizationBearer 
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:133] custom-jwt: JWT authentication starts (allow_failed=false), tokens size=1
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:144] custom-jwt: startVerify: tokens size 1
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:157] custom-jwt: Parse Jwt eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2ODg1MTg0NzIsImlhdCI6MTY1Nzc2MDA3MiwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6InNBMDRwU0p6cndJNFFHdDAtTkp2Z25NbEt0N1RNdGM3U0VLeTB1Wm11Z0UifX0.UKW4BUvudUG2g8zspchwafSASylig-GCf8ZNL3efcdxQ7MmuK2dod8X4AySJy4U1cTNL6kG81tLWFFrkrDTirm6rua45zhQ9p0ysuJgDhG7uJDF1IvbMRgj7VJzCir_8wv_99-JkJpQ9CWye0IxjIOgTUUbBTx2snrmHoJ8q-XKvGVVxN15IZJcZSFI1vfIV4x5_7HoCc9NT1CNyXnLzcvWFu4NIVaxxU1F9kx-5JiBeSZ5FN5h2uaryLvFfKSisgnlTM2e6Qro3EBNvHqfKeJ9YA0uZbpjf-SVAsqg4KS-7407elVORtuNXgt-Odv3M3LGfkAFYsy46cGbOi_W8Ow
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:167] custom-jwt: Verifying JWT token of issuer https://myissuer
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:313] custom-jwt: JWT token verification completed with: OK
+[2022-07-13 21:00:54.946][2922772][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:110] Jwt authentication completed with: OK
+[2022-07-13 21:00:54.946][2922772][info][lua] [source/extensions/filters/http/lua/lua_filter.cc:763] script log: Peer Signature: sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE
+[2022-07-13 21:00:54.946][2922772][info][lua] [source/extensions/filters/http/lua/lua_filter.cc:763] script log: JWT Signature: sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE
+[2022-07-13 21:00:54.946][2922772][debug][lua] [source/extensions/filters/common/lua/lua.cc:39] coroutine finished
+[2022-07-13 21:00:54.946][2922772][debug][router] [source/common/router/router.cc:467] [C0][S6139208093804265673] cluster 'service_httpbin' match for URL '/get'
+[2022-07-13 21:00:54.947][2922772][debug][router] [source/common/router/router.cc:670] [C0][S6139208093804265673] router decoding headers:
 ':authority', 'http.domain.com'
 ':path', '/get'
 ':method', 'GET'
 ':scheme', 'https'
-'user-agent', 'curl/7.79.1'
+'user-agent', 'curl/7.83.1'
 'accept', '*/*'
 'x-forwarded-proto', 'https'
-'x-request-id', 'dc9dc7d5-4b6e-4273-8969-18c18f46bb5e'
+'x-request-id', 'a778cd6c-eeb0-4fe6-8e6f-36ac72cee345'
 'x-envoy-expected-rq-timeout-ms', '15000'
 
-[2021-12-31 08:53:17.083][3341883][debug][pool] [source/common/http/conn_pool_base.cc:74] queueing stream due to no available connections
-[2021-12-31 08:53:17.083][3341883][debug][pool] [source/common/conn_pool/conn_pool_base.cc:255] trying to create new connection
-[2021-12-31 08:53:17.083][3341883][debug][pool] [source/common/conn_pool/conn_pool_base.cc:143] creating a new connection
-[2021-12-31 08:53:17.083][3341883][debug][client] [source/common/http/codec_client.cc:60] [C1] connecting
-[2021-12-31 08:53:17.083][3341883][debug][connection] [source/common/network/connection_impl.cc:890] [C1] connecting to 44.195.147.10:80
-[2021-12-31 08:53:17.083][3341883][debug][connection] [source/common/network/connection_impl.cc:909] [C1] connection in progress
-[2021-12-31 08:53:17.091][3341883][debug][connection] [source/common/network/connection_impl.cc:672] [C1] connected
-[2021-12-31 08:53:17.091][3341883][debug][client] [source/common/http/codec_client.cc:88] [C1] connected
-[2021-12-31 08:53:17.091][3341883][debug][pool] [source/common/conn_pool/conn_pool_base.cc:293] [C1] attaching to next stream
-[2021-12-31 08:53:17.091][3341883][debug][pool] [source/common/conn_pool/conn_pool_base.cc:176] [C1] creating stream
-[2021-12-31 08:53:17.091][3341883][debug][router] [source/common/router/upstream_request.cc:416] [C0][S4393481483203694172] pool ready
-[2021-12-31 08:53:17.100][3341883][debug][router] [source/common/router/router.cc:1285] [C0][S4393481483203694172] upstream headers complete: end_stream=false
-[2021-12-31 08:53:17.100][3341883][debug][http] [source/common/http/conn_manager_impl.cc:1467] [C0][S4393481483203694172] encoding headers via codec (end_stream=false):
+[2022-07-13 21:00:54.947][2922772][debug][pool] [source/common/http/conn_pool_base.cc:78] queueing stream due to no available connections (ready=0 busy=0 connecting=0)
+[2022-07-13 21:00:54.947][2922772][debug][pool] [source/common/conn_pool/conn_pool_base.cc:290] trying to create new connection
+[2022-07-13 21:00:54.947][2922772][debug][pool] [source/common/conn_pool/conn_pool_base.cc:145] creating a new connection (connecting=0)
+[2022-07-13 21:00:54.947][2922772][debug][connection] [./source/common/network/connection_impl.h:89] [C1] current connecting state: true
+[2022-07-13 21:00:54.947][2922772][debug][client] [source/common/http/codec_client.cc:57] [C1] connecting
+[2022-07-13 21:00:54.947][2922772][debug][connection] [source/common/network/connection_impl.cc:912] [C1] connecting to 34.227.213.82:80
+[2022-07-13 21:00:54.947][2922772][debug][connection] [source/common/network/connection_impl.cc:931] [C1] connection in progress
+[2022-07-13 21:00:54.952][2922772][debug][connection] [source/common/network/connection_impl.cc:683] [C1] connected
+[2022-07-13 21:00:54.952][2922772][debug][client] [source/common/http/codec_client.cc:89] [C1] connected
+[2022-07-13 21:00:54.952][2922772][debug][pool] [source/common/conn_pool/conn_pool_base.cc:327] [C1] attaching to next stream
+[2022-07-13 21:00:54.952][2922772][debug][pool] [source/common/conn_pool/conn_pool_base.cc:181] [C1] creating stream
+[2022-07-13 21:00:54.952][2922772][debug][router] [source/common/router/upstream_request.cc:422] [C0][S6139208093804265673] pool ready
+[2022-07-13 21:00:54.962][2922772][debug][router] [source/common/router/router.cc:1351] [C0][S6139208093804265673] upstream headers complete: end_stream=false
+[2022-07-13 21:00:54.962][2922772][debug][http] [source/common/http/conn_manager_impl.cc:1516] [C0][S6139208093804265673] encoding headers via codec (end_stream=false):
 ':status', '200'
-'date', 'Fri, 31 Dec 2021 13:53:17 GMT'
+'date', 'Thu, 14 Jul 2022 01:00:54 GMT'
 'content-type', 'application/json'
-'content-length', '309'
+'content-length', '310'
 'server', 'envoy'
 'access-control-allow-origin', '*'
 'access-control-allow-credentials', 'true'
-'x-envoy-upstream-service-time', '16'
+'x-envoy-upstream-service-time', '15'
 
-[2021-12-31 08:53:17.100][3341883][debug][client] [source/common/http/codec_client.cc:132] [C1] response complete
+[2022-07-13 21:00:54.962][2922772][debug][client] [source/common/http/codec_client.cc:126] [C1] response complete
 ```
 
 ### WASM
 
->> 12/1/20:  wasm based tokenbinding is not yet implemented and is pending [https://github.com/envoyproxy/envoy/issues/14229](https://github.com/envoyproxy/envoy/issues/14229). 
-
-However, I was able to modify envoy to emit those values and see the inside a wasm i just compiled.
-
-
-#### Upstream Envoy Changes
-
-(as of `12/30/21`)
-
-You can either make the changes below or download the envoy i compiled alredy from the 'release' page on this git repo [here](https://storage.googleapis.com/pki.esodemoapp2.com/envoy_with_tokenbinding_wasm)
-
-
-The modifiecations to upstream were simple  (from commit `96701cb24611b0f3aac1cc0dd8bf8589fbdf8e9e`).
-
-```text
-# git diff
-diff --git a/source/extensions/filters/common/expr/context.cc b/source/extensions/filters/common/expr/context.cc
-index ac0a47bd9..db801af4f 100644
---- a/source/extensions/filters/common/expr/context.cc
-+++ b/source/extensions/filters/common/expr/context.cc
-@@ -63,6 +63,10 @@ absl::optional<CelValue> extractSslInfo(const Ssl::ConnectionInfo& ssl_info,
-     if (!ssl_info.dnsSansPeerCertificate().empty()) {
-       return CelValue::CreateString(&ssl_info.dnsSansPeerCertificate()[0]);
-     }
-+  } else if (value == SHA256PeerCertificateDigest) {
-+    if (!ssl_info.sha256PeerCertificateDigest().empty()) {
-+      return CelValue::CreateString(&ssl_info.sha256PeerCertificateDigest());
-+    }
-   }
-   return {};
- }
-diff --git a/source/extensions/filters/common/expr/context.h b/source/extensions/filters/common/expr/context.h
-index 2f3f2539c..8107d1347 100644
---- a/source/extensions/filters/common/expr/context.h
-+++ b/source/extensions/filters/common/expr/context.h
-@@ -63,6 +63,7 @@ constexpr absl::string_view URISanLocalCertificate = "uri_san_local_certificate"
- constexpr absl::string_view URISanPeerCertificate = "uri_san_peer_certificate";
- constexpr absl::string_view DNSSanLocalCertificate = "dns_san_local_certificate";
- constexpr absl::string_view DNSSanPeerCertificate = "dns_san_peer_certificate";
-+constexpr absl::string_view SHA256PeerCertificateDigest = "sha256_peer_certificate_digest";
- 
- // Source properties
- constexpr absl::string_view Source = "source";
-```
-
-For me, this what i did
-
-```bash
- git clone https://github.com/envoyproxy/envoy.git
- cd envoy
- git checkout tags/v1.20.1
-
-# make the diff/edits to the two files as shown above
-# compile
-./ci/run_envoy_docker.sh './ci/do_ci.sh bazel.release.server_only'
-
-# this will take sometime but the brand new envoy will be at
-#  /tmp/envoy-docker-build/envoy/source/exe/envoy/envoy
-
-# copy that to your laptop to /tmp/envoy_tbf
-# sha256sum /tmp/envoy-docker-build/envoy/source/exe/envoy/envoy
-#     975f412ff2381dfb5f2ef5199a21b0715ae4cf8f775cf6bdce8b2a0ab5140565  /tmp/envoy-docker-build/envoy/source/exe/envoy/envoy
-```
-
-#### Build WASM
 
 You can either use the wasm binary thats part of this repo or build your own:
 
@@ -287,7 +216,8 @@ to build your own,
  rm -rf envoy/examples/wasm-cc/
  cp -R wasm-cc  envoy/examples/
  cd envoy
- git checkout tags/v1.20.1
+ # note i'm just guessing https://github.com/envoyproxy/envoy/issues/14229 is going to get included in 1.20.7
+ git checkout tags/v1.20.7
 
 bazel build //examples/wasm-cc:envoy_filter_http_wasm_tokenbinding.wasm
 ```
@@ -309,129 +239,121 @@ Now,
 
 If you compiled your own, modify the path to your own wasm
 
-Finally run the *modified* envoy binary (which you can download from this repo to `/tmp/envoy_with_tokenbinding_wasm`)
 ```
-/tmp/envoy_with_tokenbinding_wasm -c wasm.yaml -l debug
+/tmp/envoy -c wasm.yaml -l debug
 ```
+
 
 (note, i've uploaded the binary to this page [here](https://storage.googleapis.com/pki.esodemoapp2.com/envoy_with_tokenbinding_wasm))
 
 If you send in a curl request like the one above from LUA, you will see, you'll see the certificate fingerprints were extracted from the JWT and TLS session and compared.
 
 ```log
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
-   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:96]::onRequestHeaders()
-      x5t#S256 -> kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] 
+   wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:96]::onRequestHeaders()  
+      x5t#S256 -> sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE
 
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
-   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:114]::onRequestHeaders() 
-      sha256_peer_certificate_digest: kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] 
+   wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:103]::onRequestHeaders()  
+      subject_peer_certificate: CN=clientjwt.domain.com,OU=Enterprise,O=Google,C=US
 
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
-   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:121]::onRequestHeaders()
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] 
+   wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:114]::onRequestHeaders() 
+      sha256_peer_certificate_digest: sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE
+
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] 
+   wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:121]::onRequestHeaders() 
       sha256_peer_certificate_digest and digest_from_cnf_claim matched
 ```
 
 The full wasm log
 
 ```log
-[2021-12-31 09:07:15.261][3360383][debug][conn_handler] [source/server/active_tcp_listener.cc:140] [C0] new connection from 127.0.0.1:51880
-[2021-12-31 09:07:15.266][3360383][debug][http] [source/common/http/conn_manager_impl.cc:274] [C0] new stream
-[2021-12-31 09:07:15.272][3360383][debug][http] [source/common/http/conn_manager_impl.cc:867] [C0][S6778589954990283357] request headers complete (end_stream=true):
+[2022-07-14 07:19:45.521][2953099][debug][conn_handler] [source/server/active_tcp_listener.cc:147] [C0] new connection from 127.0.0.1:37392
+[2022-07-14 07:19:45.525][2953099][debug][http] [source/common/http/conn_manager_impl.cc:304] [C0] new stream
+[2022-07-14 07:19:45.525][2953099][debug][http] [source/common/http/conn_manager_impl.cc:909] [C0][S13957625050676133400] request headers complete (end_stream=true):
 ':authority', 'http.domain.com'
 ':path', '/get'
 ':method', 'GET'
-'user-agent', 'curl/7.79.1'
+'user-agent', 'curl/7.83.1'
 'accept', '*/*'
-'authorization', 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2NzE3MTcwNzAsImlhdCI6MTY0MDk1ODY3MCwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6ImtWX0ZURF9CbGxIS0ltQU1scXFiRW02TG9ITzBRWVdBVE81ZjgyM1lja0EifX0.eiUtoKxiQL98M-_lFj5nlSBhW0pm7vBGzjUA9I6rHpbElQ9GnGXKrqK3mP_2s5J6KhIFzjSfYHA3MUNi4v4MUQ72IKRlkBqyFDO0un7wun1aX1IPit9EZuEiZcBO-4FUdEiKO6eh_8q_e3OFMtUs3YfQYXKi2L11L9o62YyvD5DU0nO52UJrqDfUlMp78Za1TNaKgNCifaB7E0PrcTGr60K72GWslRicyqA6yHfJ7o-uc2q0hLV7vcdWnKVH9dnCnH7mQBF0xtxEgj1_8QGW03xmY9lEvMuSzcvbpxnyaoZpCWw-ysUnEplnQK6exiq0Y0a4Qzxn3e5mJebKWjXsWQ'
+'authorization', 'Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2ODg1MTgxMTcsImlhdCI6MTY1Nzc1OTcxNywiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6InNBMDRwU0p6cndJNFFHdDAtTkp2Z25NbEt0N1RNdGM3U0VLeTB1Wm11Z0UifX0.tpZg6srTR2sFt9gca7fY1ufdEQksaNZLZJAE1DmTdgONLuqSa_ifyvL9_o_TZVse-hhqKPx0X91yve15ROP5rorMeadWjK2sNHKNzbflM7Sa00x1UfJtX7rOkKm8r3QPYfMqXn1Ptwl8sB1yocCbhtG4vkQp-H3_olT0kjG_mno0bki8S_y_CNwN0hAAaZqSxjPZGOLzmPwcrHzJa5HZ3WptmbtcDuBT1ImHEQEb4j2yQPR1cE8I-N2TwQSGGtClKOmjG4I8gYsPl1IG70gW8kd7yyd_0mn-Ztpn6qIcBAStfDNudVmsVspHyqe5kzhuB_O2_18UECpXVHU1V_ftzQ'
 
-[2021-12-31 09:07:15.272][3360383][debug][http] [source/common/http/filter_manager.cc:835] [C0][S6778589954990283357] request end stream
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:158] Called Filter : setDecoderFilterCallbacks
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:53] Called Filter : decodeHeaders
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/matcher.cc:70] Prefix requirement '/' matched.
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/extractor.cc:249] extract authorizationBearer 
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:133] custom-jwt: JWT authentication starts (allow_failed=false), tokens size=1
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:144] custom-jwt: startVerify: tokens size 1
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:157] custom-jwt: Parse Jwt eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2NzE3MTcwNzAsImlhdCI6MTY0MDk1ODY3MCwiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6ImtWX0ZURF9CbGxIS0ltQU1scXFiRW02TG9ITzBRWVdBVE81ZjgyM1lja0EifX0.eiUtoKxiQL98M-_lFj5nlSBhW0pm7vBGzjUA9I6rHpbElQ9GnGXKrqK3mP_2s5J6KhIFzjSfYHA3MUNi4v4MUQ72IKRlkBqyFDO0un7wun1aX1IPit9EZuEiZcBO-4FUdEiKO6eh_8q_e3OFMtUs3YfQYXKi2L11L9o62YyvD5DU0nO52UJrqDfUlMp78Za1TNaKgNCifaB7E0PrcTGr60K72GWslRicyqA6yHfJ7o-uc2q0hLV7vcdWnKVH9dnCnH7mQBF0xtxEgj1_8QGW03xmY9lEvMuSzcvbpxnyaoZpCWw-ysUnEplnQK6exiq0Y0a4Qzxn3e5mJebKWjXsWQ
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:167] custom-jwt: Verifying JWT token of issuer https://myissuer
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:315] custom-jwt: JWT token verification completed with: OK
-[2021-12-31 09:07:15.272][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:110] Jwt authentication completed with: OK
-[2021-12-31 09:07:15.272][3360383][warning][wasm] [source/extensions/common/wasm/context.cc:1170] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:80]::onCreate() onCreate 2
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:83]::onRequestHeaders() onRequestHeaders 2
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:86]::onRequestHeaders() headers: 8
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() :authority -> http.domain.com
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() :path -> /get
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() :method -> GET
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() :scheme -> https
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() user-agent -> curl/7.79.1
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() accept -> */*
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() x-forwarded-proto -> https
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() x-request-id -> af99c765-fdcc-4359-bfb0-983c4e837f78
-
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
-   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:96]::onRequestHeaders() 
-   x5t#S256 -> kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
-
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id:
-   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:114]::onRequestHeaders() 
-   sha256_peer_certificate_digest: kV_FTD_BllHKImAMlqqbEm6LoHO0QYWATO5f823YckA
-
-
-[2021-12-31 09:07:15.273][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: 
-   [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:121]::onRequestHeaders() 
-   sha256_peer_certificate_digest and digest_from_cnf_claim matched
-
-[2021-12-31 09:07:15.273][3360383][debug][router] [source/common/router/router.cc:457] [C0][S6778589954990283357] cluster 'service_httpbin' match for URL '/get'
-[2021-12-31 09:07:15.273][3360383][debug][router] [source/common/router/router.cc:673] [C0][S6778589954990283357] router decoding headers:
+[2022-07-14 07:19:45.525][2953099][debug][http] [source/common/http/filter_manager.cc:790] [C0][S13957625050676133400] request end stream
+[2022-07-14 07:19:45.525][2953099][debug][connection] [./source/common/network/connection_impl.h:89] [C0] current connecting state: false
+[2022-07-14 07:19:45.525][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:157] Called Filter : setDecoderFilterCallbacks
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:53] Called Filter : decodeHeaders
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/matcher.cc:71] Prefix requirement '/' matched.
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/extractor.cc:250] extract authorizationBearer 
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:133] custom-jwt: JWT authentication starts (allow_failed=false), tokens size=1
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:144] custom-jwt: startVerify: tokens size 1
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:157] custom-jwt: Parse Jwt eyJhbGciOiJSUzI1NiIsImtpZCI6IjIiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL2Zvby5iYXIiLCJleHAiOjE2ODg1MTgxMTcsImlhdCI6MTY1Nzc1OTcxNywiaXNzIjoiaHR0cHM6Ly9teWlzc3VlciIsImNuZiI6eyJ4NXQjUzI1NiI6InNBMDRwU0p6cndJNFFHdDAtTkp2Z25NbEt0N1RNdGM3U0VLeTB1Wm11Z0UifX0.tpZg6srTR2sFt9gca7fY1ufdEQksaNZLZJAE1DmTdgONLuqSa_ifyvL9_o_TZVse-hhqKPx0X91yve15ROP5rorMeadWjK2sNHKNzbflM7Sa00x1UfJtX7rOkKm8r3QPYfMqXn1Ptwl8sB1yocCbhtG4vkQp-H3_olT0kjG_mno0bki8S_y_CNwN0hAAaZqSxjPZGOLzmPwcrHzJa5HZ3WptmbtcDuBT1ImHEQEb4j2yQPR1cE8I-N2TwQSGGtClKOmjG4I8gYsPl1IG70gW8kd7yyd_0mn-Ztpn6qIcBAStfDNudVmsVspHyqe5kzhuB_O2_18UECpXVHU1V_ftzQ
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:167] custom-jwt: Verifying JWT token of issuer https://myissuer
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/authenticator.cc:313] custom-jwt: JWT token verification completed with: OK
+[2022-07-14 07:19:45.526][2953099][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:109] Jwt authentication completed with: OK
+[2022-07-14 07:19:45.526][2953099][warning][wasm] [source/extensions/common/wasm/context.cc:1173] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:80]::onCreate() onCreate 2
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:83]::onRequestHeaders() onRequestHeaders 2
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:86]::onRequestHeaders() headers: 8
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() :authority -> http.domain.com
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() :path -> /get
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() :method -> GET
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() :scheme -> https
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() user-agent -> curl/7.83.1
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() accept -> */*
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() x-forwarded-proto -> https
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:88]::onRequestHeaders() x-request-id -> 62878778-bf15-4d55-a4b4-4858002d5035
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:96]::onRequestHeaders()  x5t#S256 -> sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:103]::onRequestHeaders()  subject_peer_certificate: CN=clientjwt.domain.com,OU=Enterprise,O=Google,C=US
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:114]::onRequestHeaders() sha256_peer_certificate_digest: sA04pSJzrwI4QGt0-NJvgnMlKt7TMtc7SEKy0uZmugE
+[2022-07-14 07:19:45.526][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:121]::onRequestHeaders() sha256_peer_certificate_digest and digest_from_cnf_claim matched
+[2022-07-14 07:19:45.526][2953099][debug][router] [source/common/router/router.cc:471] [C0][S13957625050676133400] cluster 'service_httpbin' match for URL '/get'
+[2022-07-14 07:19:45.526][2953099][debug][router] [source/common/router/router.cc:675] [C0][S13957625050676133400] router decoding headers:
 ':authority', 'http.domain.com'
 ':path', '/get'
 ':method', 'GET'
 ':scheme', 'https'
-'user-agent', 'curl/7.79.1'
+'user-agent', 'curl/7.83.1'
 'accept', '*/*'
 'x-forwarded-proto', 'https'
-'x-request-id', 'af99c765-fdcc-4359-bfb0-983c4e837f78'
+'x-request-id', '62878778-bf15-4d55-a4b4-4858002d5035'
 'x-envoy-expected-rq-timeout-ms', '15000'
 
-[2021-12-31 09:07:15.273][3360383][debug][pool] [source/common/http/conn_pool_base.cc:74] queueing stream due to no available connections
-[2021-12-31 09:07:15.273][3360383][debug][pool] [source/common/conn_pool/conn_pool_base.cc:255] trying to create new connection
-[2021-12-31 09:07:15.273][3360383][debug][pool] [source/common/conn_pool/conn_pool_base.cc:143] creating a new connection
-[2021-12-31 09:07:15.273][3360383][debug][client] [source/common/http/codec_client.cc:60] [C1] connecting
-[2021-12-31 09:07:15.273][3360383][debug][connection] [source/common/network/connection_impl.cc:890] [C1] connecting to 3.223.33.229:80
-[2021-12-31 09:07:15.273][3360383][debug][connection] [source/common/network/connection_impl.cc:909] [C1] connection in progress
-[2021-12-31 09:07:15.296][3360383][debug][connection] [source/common/network/connection_impl.cc:672] [C1] connected
-[2021-12-31 09:07:15.296][3360383][debug][client] [source/common/http/codec_client.cc:88] [C1] connected
-[2021-12-31 09:07:15.296][3360383][debug][pool] [source/common/conn_pool/conn_pool_base.cc:293] [C1] attaching to next stream
-[2021-12-31 09:07:15.296][3360383][debug][pool] [source/common/conn_pool/conn_pool_base.cc:176] [C1] creating stream
-[2021-12-31 09:07:15.296][3360383][debug][router] [source/common/router/upstream_request.cc:416] [C0][S6778589954990283357] pool ready
-[2021-12-31 09:07:15.519][3360383][debug][router] [source/common/router/router.cc:1285] [C0][S6778589954990283357] upstream headers complete: end_stream=false
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:127]::onResponseHeaders() onResponseHeaders 2
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:130]::onResponseHeaders() headers: 9
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() :status -> 200
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() date -> Fri, 31 Dec 2021 14:07:15 GMT
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() content-type -> application/json
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() content-length -> 309
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() connection -> keep-alive
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() server -> gunicorn/19.9.0
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() access-control-allow-origin -> *
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() access-control-allow-credentials -> true
-[2021-12-31 09:07:15.520][3360383][debug][wasm] [source/extensions/common/wasm/context.cc:1164] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() x-envoy-upstream-service-time -> 245
-[2021-12-31 09:07:15.520][3360383][debug][http] [source/common/http/conn_manager_impl.cc:1467] [C0][S6778589954990283357] encoding headers via codec (end_stream=false):
+[2022-07-14 07:19:45.526][2953099][debug][pool] [source/common/http/conn_pool_base.cc:78] queueing stream due to no available connections (ready=0 busy=0 connecting=0)
+[2022-07-14 07:19:45.526][2953099][debug][pool] [source/common/conn_pool/conn_pool_base.cc:290] trying to create new connection
+[2022-07-14 07:19:45.526][2953099][debug][pool] [source/common/conn_pool/conn_pool_base.cc:145] creating a new connection (connecting=0)
+[2022-07-14 07:19:45.526][2953099][debug][connection] [./source/common/network/connection_impl.h:89] [C1] current connecting state: true
+[2022-07-14 07:19:45.526][2953099][debug][client] [source/common/http/codec_client.cc:57] [C1] connecting
+[2022-07-14 07:19:45.526][2953099][debug][connection] [source/common/network/connection_impl.cc:924] [C1] connecting to 34.227.213.82:80
+[2022-07-14 07:19:45.526][2953099][debug][connection] [source/common/network/connection_impl.cc:943] [C1] connection in progress
+[2022-07-14 07:19:45.532][2953099][debug][connection] [source/common/network/connection_impl.cc:683] [C1] connected
+[2022-07-14 07:19:45.532][2953099][debug][client] [source/common/http/codec_client.cc:89] [C1] connected
+[2022-07-14 07:19:45.532][2953099][debug][pool] [source/common/conn_pool/conn_pool_base.cc:327] [C1] attaching to next stream
+[2022-07-14 07:19:45.532][2953099][debug][pool] [source/common/conn_pool/conn_pool_base.cc:181] [C1] creating stream
+[2022-07-14 07:19:45.533][2953099][debug][router] [source/common/router/upstream_request.cc:424] [C0][S13957625050676133400] pool ready
+[2022-07-14 07:19:45.540][2953099][debug][router] [source/common/router/router.cc:1359] [C0][S13957625050676133400] upstream headers complete: end_stream=false
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:127]::onResponseHeaders() onResponseHeaders 2
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:130]::onResponseHeaders() headers: 9
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() :status -> 200
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() date -> Thu, 14 Jul 2022 11:19:45 GMT
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() content-type -> application/json
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() content-length -> 310
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() connection -> keep-alive
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() server -> gunicorn/19.9.0
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() access-control-allow-origin -> *
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() access-control-allow-credentials -> true
+[2022-07-14 07:19:45.541][2953099][debug][wasm] [source/extensions/common/wasm/context.cc:1167] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:132]::onResponseHeaders() x-envoy-upstream-service-time -> 14
+[2022-07-14 07:19:45.541][2953099][debug][http] [source/common/http/conn_manager_impl.cc:1525] [C0][S13957625050676133400] encoding headers via codec (end_stream=false):
 ':status', '200'
-'date', 'Fri, 31 Dec 2021 14:07:15 GMT'
+'date', 'Thu, 14 Jul 2022 11:19:45 GMT'
 'content-type', 'application/json'
-'content-length', '309'
+'content-length', '310'
 'server', 'envoy'
 'access-control-allow-origin', '*'
 'access-control-allow-credentials', 'true'
-'x-envoy-upstream-service-time', '245'
+'x-envoy-upstream-service-time', '14'
 
-[2021-12-31 09:07:15.520][3360383][debug][client] [source/common/http/codec_client.cc:132] [C1] response complete
-[2021-12-31 09:07:15.521][3360383][warning][wasm] [source/extensions/common/wasm/context.cc:1170] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:151]::onLog() onLog 2
-[2021-12-31 09:07:15.521][3360383][debug][jwt] [source/extensions/filters/http/jwt_authn/filter.cc:46] Called Filter : onDestroy
-[2021-12-31 09:07:15.521][3360383][warning][wasm] [source/extensions/common/wasm/context.cc:1170] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:149]::onDone() onDone 2
-[2021-12-31 09:07:15.521][3360383][warning][wasm] [source/extensions/common/wasm/context.cc:1170] wasm log my_plugin tb_root_id tb_root_id: [examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.cc:153]::onDelete() onDelete 2
-[2021-12-31 09:07:15.521][3360383][debug][pool] [source/common/http/http1/conn_pool.cc:53] [C1] response complete
+[2022-07-14 07:19:45.541][2953099][debug][client] [source/common/http/codec_client.cc:127] [C1] response complete
+
 ```
 
 Again, you should wait for the upstream changes

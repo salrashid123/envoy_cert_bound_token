@@ -130,6 +130,8 @@ static_resources:
                   end
                 end            
           - name: envoy.filters.http.router
+            typed_config:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router            
       transport_socket:
         name: envoy.transport_sockets.tls
         typed_config:
@@ -145,7 +147,7 @@ static_resources:
               trusted_ca:
                 filename: certs/tls-ca-chain.pem
               # verify_certificate_spki:
-              # - "lWH3KiAwwP49UWiHrhYqrKuNkOOoYC9qU+EUG9ACEWM="
+              # - "eg/6vJpi6uvroElnSNBfUC1gg6wfmgR/i2OEg95yZ+g="
   clusters:
   - name: service_httpbin
     connect_timeout: 0.25s
