@@ -218,8 +218,7 @@ to build your own,
  rm -rf envoy/examples/wasm-cc/
  cp -R wasm-cc  envoy/examples/
  cd envoy
- # note i'm just guessing https://github.com/envoyproxy/envoy/issues/14229 is going to get included in 1.20.7
- git checkout tags/v1.20.7
+ # note cert specs surfaced to envoy https://github.com/envoyproxy/envoy/issues/14229
 
 bazel build //examples/wasm-cc:envoy_filter_http_wasm_tokenbinding.wasm
 ```
