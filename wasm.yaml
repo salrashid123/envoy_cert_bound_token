@@ -72,16 +72,16 @@ static_resources:
                     runtime: "envoy.wasm.runtime.v8"
                     vm_id: "tb_root_id"
                     code:
-                      local:
-                        filename: "wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm"                      
-                        #filename: "envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.wasm"
-                      # remote:
-                      #  sha256: c6af309560400a482f849e3741aebb34f05f255077902b16f719b7f91fc180c2
-                      #  http_uri:
-                      #    uri: https://github.com/salrashid123/envoy_cert_bound_token/raw/main/wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm
-                      #    cluster: com_github
-                      #    timeout:
-                      #      seconds: 5
+                      # local:
+                      #   filename: "wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm"                      
+                      #   #filename: "envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.wasm"
+                      remote:
+                       sha256: c6af309560400a482f849e3741aebb34f05f255077902b16f719b7f91fc180c2
+                       http_uri:
+                         uri: https://raw.githubusercontent.com/salrashid123/envoy_cert_bound_token/main/wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm
+                         cluster: com_github
+                         timeout:
+                           seconds: 5
 
                     configuration: {}                  
           - name: envoy.filters.http.router
@@ -122,6 +122,11 @@ static_resources:
     connect_timeout: 0.25s
     type: STRICT_DNS
     lb_policy: round_robin
+    http2_protocol_options: {}
+    transport_socket:
+      name: envoy.transport_sockets.tls
+      typed_config:
+        "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext             
     load_assignment:
       cluster_name: com_github
       endpoints:
@@ -129,5 +134,6 @@ static_resources:
         - endpoint:
             address:
               socket_address:
-                address: github.com
+                address: raw.githubusercontent.com
                 port_value: 443
+ 
