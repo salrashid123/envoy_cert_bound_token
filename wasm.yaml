@@ -72,16 +72,16 @@ static_resources:
                     runtime: "envoy.wasm.runtime.v8"
                     vm_id: "tb_root_id"
                     code:
-                      # local:
-                      #   filename: "wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm"                      
+                      local:
+                        filename: "wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm"                      
                       #   #filename: "envoy/bazel-bin/examples/wasm-cc/envoy_filter_http_wasm_tokenbinding.wasm"
-                      remote:
-                       sha256: c6af309560400a482f849e3741aebb34f05f255077902b16f719b7f91fc180c2
-                       http_uri:
-                         uri: https://raw.githubusercontent.com/salrashid123/envoy_cert_bound_token/main/wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm
-                         cluster: com_github
-                         timeout:
-                           seconds: 5
+                      # remote:
+                      #  sha256: c6af309560400a482f849e3741aebb34f05f255077902b16f719b7f91fc180c2
+                      #  http_uri:
+                      #    uri: https://raw.githubusercontent.com/salrashid123/envoy_cert_bound_token/main/wasm-binary/envoy_filter_http_wasm_tokenbinding.wasm
+                      #    cluster: com_github
+                      #    timeout:
+                      #      seconds: 5
 
                     configuration: {}                  
           - name: envoy.filters.http.router
