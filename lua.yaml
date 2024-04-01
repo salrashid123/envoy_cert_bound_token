@@ -147,7 +147,7 @@ static_resources:
               trusted_ca:
                 filename: certs/tls-ca-chain.pem
               # verify_certificate_spki:
-              # - "eg/6vJpi6uvroElnSNBfUC1gg6wfmgR/i2OEg95yZ+g="
+              # - "iZIV9zjai3erxn/2FfKs/JT4PdLXcFqwAUF9ZZPWElI="
   clusters:
   - name: service_httpbin
     connect_timeout: 0.25s

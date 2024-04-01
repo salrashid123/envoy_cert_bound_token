@@ -9,14 +9,15 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 var (
-	capubFile     = flag.String("capubFile", "../certs/tls-ca.crt", "Path to input Public CA key")
-	caprivFile    = flag.String("caprivFile", "../certs/tls-ca.key", "Path to input Private key to sign the JWT")
+	capubFile     = flag.String("capubFile", "../certs/jwtca.crt", "Path to input Public CA key")
+	caprivFile    = flag.String("caprivFile", "../certs/jwtca.key", "Path to input Private key to sign the JWT")
 	clientpubCert = flag.String("clientpubCert", "../certs/clientjwt.crt", "Path to public certificate to create X5T")
 )
 
@@ -35,7 +36,7 @@ func main() {
 
 	flag.Parse()
 
-	dat, err := ioutil.ReadFile(*clientpubCert)
+	dat, err := os.ReadFile(*clientpubCert)
 	if err != nil {
 		log.Fatalf("Failed to read PEM File: %v", err)
 	}
@@ -68,7 +69,7 @@ func main() {
 		log.Fatalf("failed to ParseCertificate")
 	}
 
-	keyData, err := ioutil.ReadFile(*caprivFile)
+	keyData, err := os.ReadFile(*caprivFile)
 	if err != nil {
 		log.Fatalf("Error reading private key: %v", err)
 	}
